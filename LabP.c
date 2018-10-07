@@ -1,55 +1,93 @@
 #include <stdio.h>
-#define MAXLINE 1000
-void process_line( char buffer[] );
-void main( void )
-{
-	char line[MAXLINE];
-	printf("Start line: ");
-	gets( line );
-	process_line( line );
-	printf("Result line: ");
-	puts( line );
-}
+#include <stdlib.h>
 
-void process_line( char buffer[] )
+#define MAX 1000
+
+int main()
 {
-	char *buf_ptr; 
-	char *end; 
-	char *begin; 
-	char c; 
-	char prev_c;
-	prev_c = ' ';
-	buf_ptr = buffer;
-	begin = buffer;
-	end = buffer;
-	do
+	char buf[MAX];
+	int flag = 0;
+
+	FILE *fpin, *fpout;
+
+	fpin = fopen("Text.txt", "rt");
+	if(fpin == NULL)
 	{
-		c = *buf_ptr;
-		if((c != ' ') && (c != ',') && (c != '.') && (c != '\0'))
-			if((prev_c == ' ') || (prev_c == ',') || (prev_c == '.') || (prev_c == '\0'))
-				begin = buf_ptr;
+		printf("Error opening file: text.txt \n");
+		system("pause");
+		return 1;
+	}
+	else 
+		printf ("File text.txt opened successfully\n");
 
-		if((prev_c != ' ') && (prev_c != ',') && (prev_c != '.') && (prev_c != '\0'))
-			if((c == ' ') || (c == ',') || (c == '.') || (c == '\0'))
-			{
-				end = buf_ptr - 1;
-				if(*begin == *end)
+	fpout = fopen("test.txt", "wt");
+	if(fpout == NULL) 
+	{
+		printf("Error opening file: test.txt \n");
+		system("pause");
+		return 1;
+	}
+	else 
+		printf ("File test.txt opened successfully\n");
+
+	while(!feof(fpin))
+	{
+		char *ptr;
+		ptr = fgets(buf, MAX, fpin);
+
+		if(ptr == NULL) 
+			break;
+
+		while(*ptr != '\n')
+		{
+			if(flag == 0)
+				if((*ptr == '/') && (*(ptr + 1) == '/'))
 				{
-					char *begin_c, *end_c;
-					begin_c = begin;
-					end_c = end + 1;
-
-					while(*end_c != '\0')
-						*begin_c++ = *end_c++;
-
-					*begin_c = '\0';
-					buf_ptr = buffer;
-					c = *buf_ptr;	
+					while(*ptr != '\n')
+					{
+						if(*ptr == '\0')
+							break;
+						*ptr = ' ';
+						ptr++;
+					}
+					break;
 				}
-			}
 
-	buf_ptr++;
-	prev_c = c;
-	} while( c != '\0' );
+			if((*ptr == '/') && (*(ptr + 1) == '*'))
+				flag = 1; 
+			
+			if(flag == 1)
+				while(1)
+				{
+					if((*ptr == '*') && (*(ptr + 1) == '/')) 
+					{
+						*ptr = ' ';
+						*(ptr + 1) = ' ';
+						flag = 0;
+						break;
+					}
+					else
+						*ptr = ' ';
+					if(*ptr != '\n') 
+						break;
+					ptr++;
+				}
 
+			ptr++;
+		}
+
+		fputs(buf, fpout);
+	}
+
+	if(fclose (fpin) == EOF) 
+		printf ("Error closing file: text.txt\n");
+	else 
+		printf ("File text.txt closed successfully\n");
+
+	if(fclose (fpout) == EOF) 
+		printf ("Error closing file: test.txt\n");
+	else 
+		printf ("File test.txt closed successfully\n");
+	system("pause");
+	return 0;
 }
