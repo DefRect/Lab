@@ -1,0 +1,166 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+#include <windows.h>
+#include <locale.h>
+#define MAXLEN 1000
+
+void main(void)
+{
+	HANDLE hStdout;
+	FILE *fp;
+	char line[MAXLEN];
+	char word[MAXLEN];
+	char **id = NULL;
+	char **name;
+	char *type;
+	int i, j;
+	int flag;
+	int prev_flag;
+	int count = 0;
+	int f;
+	char *ptr;
+	WORD foregroundColor0; 
+	WORD textAttribute; 
+	hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	foregroundColor0 = FOREGROUND_INTENSITY | FOREGROUND_RED;
+	setlocale(LC_ALL, "Rus");
+	fp = fopen("Text.txt", "rt");
+	if (fp == NULL)
+		return; 
+
+	name = (char**)calloc(8, sizeof(char*));
+	for(i = 0; i < 8; i++)
+		name[i] = (char*)calloc(10, sizeof(char));
+
+	name[0] = "int ";
+	name[1] = "char ";
+	name[2] = "insigned ";
+	name[3] = "signed ";
+	name[4] = "long ";
+	name[5] = "short ";
+	name[6] = "float ";
+	name[7] = "double ";
+
+	while (!feof(fp))
+	{
+		type = NULL;
+		ptr = fgets(line, MAXLEN, fp);
+		if (ptr == NULL)
+			break;
+		for(i = 0; i < 8; i++)
+		{
+			type = strstr(ptr, name[i]);
+			if(type != NULL)
+			{
+				ptr = type;
+				break;
+			}
+		}
+		i = 0;
+		prev_flag = flag = 0;
+		word[0] = '\0';
+		while (*ptr != 0)
+		{
+			prev_flag = flag;
+			if (*ptr == ',' || *ptr == '.' ||*ptr == '\n' || *ptr == '[' || *ptr == ']' || *ptr == '&' || *ptr == '(' || *ptr == ')')
+				flag = 0;
+			else if(*ptr == ' ')
+			{
+				while(*(ptr + 1) == ' ')
+					word[i++] = *ptr++;
+
+				if(*(ptr + 1) == '[')
+					flag = 1;
+				else
+					flag = 0;
+			}
+			else
+				flag = 1;
+
+			if(*ptr == '*')
+				type = NULL;
+
+			if (flag != prev_flag)
+			{
+				word[i] = '\0';
+				if (*ptr == '[' && *(ptr - 1) != 39) 
+				{
+					f = -1;
+					for(j = 0; j < count; j++)
+					{
+						f = strcmp(word, id[j]);
+						if(f == 0)
+							break;
+					}
+
+					if(f != 0 && type != NULL)
+					{
+						count++;
+						id = (char**)realloc(id, count*sizeof(char*));
+						id[count-1] = (char*)malloc(MAXLEN);
+						strcpy(id[count-1], word);
+					}
+				}
+				i = 0;
+			}
+			word[i++] = *ptr++;
+		}
+	}
+	for(i = 0; i < count; i++)
+	printf("|%s|\n",id[i]);
+	fclose(fp);
+	fp = fopen("Text.txt", "rt");
+	if (fp == NULL)
+		return; 
+
+	while (!feof(fp))
+	{
+		type = NULL;
+		ptr = fgets(line, MAXLEN, fp);
+		if (ptr == NULL)
+			break;
+
+		i = 0;
+		prev_flag = flag = 0;
+		word[0] = '\0';
+		while (*ptr != 0)
+		{
+			prev_flag = flag;
+			if (*ptr == 9 || *ptr == ',' || *ptr == ' ' || *ptr == '.' ||*ptr == '\n' || *ptr == '[' || *ptr == ']' || *ptr == '&'|| *ptr == '('|| *ptr == ')')
+				flag = 0;
+			else
+				flag = 1;
+
+			if (flag != prev_flag)
+			{
+				word[i] = '\0';
+				f = -1;
+				for(j = 0; j < count; j++)
+				{
+					f = strcmp(word,id[j]);
+					if(f == 0)
+						break;
+				}
+				if(f == 0)
+				{
+					textAttribute = foregroundColor0;
+					SetConsoleTextAttribute(hStdout, textAttribute);
+				}
+				else
+					SetConsoleTextAttribute(hStdout, 7);
+				printf("%s", word);
+				i = 0;
+			}
+				
+				word[i++] = *ptr++;
+		}
+		if (i != 0)
+		{
+			word[i] = '\0'; 
+			printf("%s", word); 
+		}
+	}
+	printf("\n");
+	system("pause");
+}
